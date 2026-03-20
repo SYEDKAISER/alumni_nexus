@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
 const branchCourseMap = {
@@ -11,19 +12,11 @@ const branchCourseMap = {
   "Business School": ["BBA", "MBA"]
 };
 
-const branchIcons = {
-  CSE: "💻",
-  CIVIL: "🏗️",
-  ECE: "📡",
-  ELECTRICAL: "⚡",
-  MECHANICAL: "⚙️",
-  "Computer Sciences": "🖥️",
-  "Business School": "📊"
-};
-
 const CoursePage = () => {
-  const [step, setStep] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  const [step, setStep] = useState(1);
   const [branch, setBranch] = useState("");
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
@@ -32,31 +25,37 @@ const CoursePage = () => {
   const [availableBatches, setAvailableBatches] = useState([]);
   const [search, setSearch] = useState("");
 
-  // ✅ FETCH FULL DATA ON LOAD
+  // SAFE NAVIGATION
+  useEffect(() => {
+    const selectedBranch = location.state?.branch;
+
+    if (!selectedBranch) {
+      navigate("/");
+    } else {
+      setBranch(selectedBranch);
+      setStep(2);
+    }
+  }, [location, navigate]);
+
+  // RESET
+  useEffect(() => {
+    setCourse("");
+    setBatch("");
+  }, [branch]);
+
+  // FETCH DATA
   useEffect(() => {
     fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
-
         const rows = text.trim().split("\n");
 
-        const splitCSV = (row) =>
-          row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
-
-        const headers = splitCSV(rows[0]).map(h =>
-          h.replace(/"/g, "").trim()
-        );
+        const headers = rows[0].split(",").map(h => h.trim());
 
         const data = rows.slice(1).map(row => {
-          const values = splitCSV(row).map(v =>
-            v.replace(/"/g, "").trim()
-          );
-
+          const values = row.split(",");
           let obj = {};
-          headers.forEach((h, i) => {
-            obj[h] = values[i];
-          });
-
+          headers.forEach((h, i) => obj[h] = values[i]?.trim());
           return obj;
         });
 
@@ -64,36 +63,39 @@ const CoursePage = () => {
       });
   }, []);
 
-  // ✅ GET AVAILABLE BATCHES BASED ON BRANCH + COURSE
+  // FILTER BATCHES
   useEffect(() => {
     if (!branch || !course) return;
 
     const batches = students
-      .filter(s =>
-        s.Branch?.toLowerCase() === branch.toLowerCase() &&
-        s.Course?.toLowerCase() === course.toLowerCase()
-      )
+      .filter(s => s.Branch === branch && s.Course === course)
       .map(s => s.Batch);
 
-    const unique = [...new Set(batches)].sort((a, b) => b - a);
-
-    setAvailableBatches(unique);
-
+    setAvailableBatches([...new Set(batches)]);
   }, [branch, course, students]);
 
-  // ✅ FILTER FINAL STUDENTS
+  // FILTER STUDENTS
   const filteredStudents = students.filter(
-    (s) =>
-      s.Branch?.toLowerCase() === branch.toLowerCase() &&
-      s.Course?.toLowerCase() === course.toLowerCase() &&
-      String(s.Batch) === String(batch) &&
+    s =>
+      s.Branch === branch &&
+      s.Course === course &&
+      s.Batch === batch &&
       (
         s.Name?.toLowerCase().includes(search.toLowerCase()) ||
         s.Roll?.toLowerCase().includes(search.toLowerCase())
       )
   );
 
-  // ✅ FORM
+  // BACK BUTTON
+  const handleBack = () => {
+    if (step === 2) {
+      navigate("/");
+    } else {
+      setStep(step - 1);
+    }
+  };
+
+  // FILL FORM
   const openForm = (s) => {
     const base =
       "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
@@ -111,52 +113,30 @@ const CoursePage = () => {
   return (
     <div className="course-page">
 
-      {/* HEADER */}
-      <div className="course-header-bar">
-        <div className="college-info">
+      <div className="course-card">
+
+        {/* ✅ TOP CENTERED (LIKE ORIGINAL) */}
+        <div className="course-top">
           <img src="/ssmlogo.png" alt="logo" className="course-logo" />
+
           <div>
             <h1 className="college-name">SSM College of Engineering</h1>
             <p className="portal-name">Alumni Portal</p>
           </div>
         </div>
-      </div>
 
-      {/* CARD */}
-      <div className="course-card">
-
+        {/* BACK */}
         {step > 1 && (
-          <button className="back-btn" onClick={() => setStep(step - 1)}>
+          <button className="back-btn" onClick={handleBack}>
             ← Back
           </button>
         )}
 
-        {/* STEP 1 */}
-        {step === 1 && (
-          <>
-            <h3>Select Branch</h3>
-            <div className="branch-grid">
-              {Object.keys(branchCourseMap).map(b => (
-                <div
-                  key={b}
-                  className="branch-card"
-                  onClick={() => {
-                    setBranch(b);
-                    setStep(2);
-                  }}
-                >
-                  <span className="icon">{branchIcons[b]}</span>
-                  <p>{b}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
         {/* STEP 2 */}
         {step === 2 && (
-          <>
+          <div key={branch}>
             <h3>{branch}</h3>
+
             <div className="course-pills">
               {branchCourseMap[branch].map(c => (
                 <span
@@ -171,10 +151,10 @@ const CoursePage = () => {
                 </span>
               ))}
             </div>
-          </>
+          </div>
         )}
 
-        {/* STEP 3 (DYNAMIC BATCHES) */}
+        {/* STEP 3 */}
         {step === 3 && (
           <>
             <h3>{branch} / {course}</h3>
@@ -191,7 +171,6 @@ const CoursePage = () => {
               {availableBatches.map((b, i) => (
                 <option key={i}>{b}</option>
               ))}
-
             </select>
           </>
         )}
@@ -215,6 +194,7 @@ const CoursePage = () => {
                 <div key={i} className="student-row">
                   <span>{s.Name}</span>
                   <span>{s.Roll}</span>
+
                   <button className="btn" onClick={() => openForm(s)}>
                     Fill Form
                   </button>
