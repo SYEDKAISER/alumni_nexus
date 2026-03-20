@@ -29,27 +29,28 @@ const CoursePage = () => {
   const [batch, setBatch] = useState("");
 
   const [students, setStudents] = useState([]);
+  const [availableBatches, setAvailableBatches] = useState([]);
   const [search, setSearch] = useState("");
 
-  const batches = Array.from({ length: 26 }, (_, i) => 2000 + i);
-
+  // ✅ FETCH FULL DATA ON LOAD
   useEffect(() => {
-    if (step !== 4) return;
-
     fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
+
         const rows = text.trim().split("\n");
 
-        // ✅ FIX: remove quotes from headers
-        const headers = rows[0]
-          .split(",")
-          .map(h => h.replace(/"/g, "").trim());
+        const splitCSV = (row) =>
+          row.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+
+        const headers = splitCSV(rows[0]).map(h =>
+          h.replace(/"/g, "").trim()
+        );
 
         const data = rows.slice(1).map(row => {
-          const values = row
-            .split(",")
-            .map(v => v.replace(/"/g, "").trim());
+          const values = splitCSV(row).map(v =>
+            v.replace(/"/g, "").trim()
+          );
 
           let obj = {};
           headers.forEach((h, i) => {
@@ -59,27 +60,40 @@ const CoursePage = () => {
           return obj;
         });
 
-        // ✅ FINAL SAFE FILTER
-        const filtered = data.filter((s) =>
-          s.Name &&
-          s.Branch?.toLowerCase() === branch.toLowerCase() &&
-          s.Course?.toLowerCase() === course.toLowerCase() &&
-          String(s.Batch) === String(batch)
-        );
+        setStudents(data);
+      });
+  }, []);
 
-        console.log("Filtered:", filtered); // debug
+  // ✅ GET AVAILABLE BATCHES BASED ON BRANCH + COURSE
+  useEffect(() => {
+    if (!branch || !course) return;
 
-        setStudents(filtered);
-      })
-      .catch(err => console.error("CSV Error:", err));
-  }, [step, branch, course, batch]);
+    const batches = students
+      .filter(s =>
+        s.Branch?.toLowerCase() === branch.toLowerCase() &&
+        s.Course?.toLowerCase() === course.toLowerCase()
+      )
+      .map(s => s.Batch);
 
+    const unique = [...new Set(batches)].sort((a, b) => b - a);
+
+    setAvailableBatches(unique);
+
+  }, [branch, course, students]);
+
+  // ✅ FILTER FINAL STUDENTS
   const filteredStudents = students.filter(
     (s) =>
-      s.Name?.toLowerCase().includes(search.toLowerCase()) ||
-      s.Roll?.toLowerCase().includes(search.toLowerCase())
+      s.Branch?.toLowerCase() === branch.toLowerCase() &&
+      s.Course?.toLowerCase() === course.toLowerCase() &&
+      String(s.Batch) === String(batch) &&
+      (
+        s.Name?.toLowerCase().includes(search.toLowerCase()) ||
+        s.Roll?.toLowerCase().includes(search.toLowerCase())
+      )
   );
 
+  // ✅ FORM
   const openForm = (s) => {
     const base =
       "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
@@ -160,21 +174,24 @@ const CoursePage = () => {
           </>
         )}
 
-        {/* STEP 3 */}
+        {/* STEP 3 (DYNAMIC BATCHES) */}
         {step === 3 && (
           <>
             <h3>{branch} / {course}</h3>
+
             <select
               className="dropdown"
               onChange={(e) => {
-                setBatch(String(e.target.value));
+                setBatch(e.target.value);
                 setStep(4);
               }}
             >
               <option value="">Select Batch</option>
-              {batches.map(b => (
-                <option key={b}>{b}</option>
+
+              {availableBatches.map((b, i) => (
+                <option key={i}>{b}</option>
               ))}
+
             </select>
           </>
         )}
