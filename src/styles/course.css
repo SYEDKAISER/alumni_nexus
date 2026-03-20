@@ -1,0 +1,115 @@
+.course-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* HEADER */
+.course-header-bar {
+  width: 750px;
+  padding: 12px;
+  background: linear-gradient(90deg, #1e3c72, #2a5298);
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.college-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-logo {
+  width: 45px;
+}
+
+.college-name {
+  color: white;
+  font-size: 18px;
+  margin: 0;
+}
+
+.portal-name {
+  color: white;
+  font-size: 12px;
+  margin: 0;
+}
+
+/* CARD */
+.course-card {
+  width: 750px;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+}
+
+/* GRID */
+.branch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.branch-card {
+  padding: 15px;
+  background: #f3f4f6;
+  text-align: center;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.branch-card:hover {
+  background: #e0e7ff;
+}
+
+/* PILLS */
+.course-pills {
+  display: flex;
+  gap: 10px;
+}
+
+.pill {
+  padding: 8px 14px;
+  background: #eee;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.pill:hover {
+  background: #1e3c72;
+  color: white;
+}
+
+/* DROPDOWN */
+.dropdown {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+}
+
+/* SEARCH */
+.search {
+  width: 100%;
+  padding: 10px;
+  margin: 15px 0;
+}
+
+/* STUDENT ROW */
+.student-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* BUTTON */
+.btn {
+  padding: 6px 12px;
+  background: #1e3c72;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}

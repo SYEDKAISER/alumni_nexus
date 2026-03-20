@@ -1,0 +1,45 @@
+/* NAVBAR */
+.navbar {
+  height: 65px;
+  background: linear-gradient(90deg, #1e3c72, #2a5298);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 25px;
+}
+
+/* LEFT SIDE */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* LOGO */
+.logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* BRAND */
+.brand-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.brand-sub {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* RIGHT */
+.nav-right {
+  font-size: 14px;
+}
