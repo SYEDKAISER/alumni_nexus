@@ -104,19 +104,19 @@ const CoursePage = () => {
   /* GOOGLE FORM PREFILL — ALL 5 FIELDS */
   const openForm = (s) => {
 
-    const base =
-      "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
+  const base =
+    "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
 
-    const url =
-      `${base}` +
-      `&entry.2061477684=${encodeURIComponent(s.Name)}` +
-      `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
-      `&entry.1161002506=${encodeURIComponent(s.Course)}` +
-      `&entry.1808170822=${encodeURIComponent(s.Batch)}` +
-      `&entry.1161002506=${encodeURIComponent(s.Department)}`; 
+  const url =
+    `${base}` +
+    `&entry.2061477684=${encodeURIComponent(s.Name)}` +
+    `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
+    `&entry.631301714=${encodeURIComponent(s.Department)}` +
+    `&entry.1161002506=${encodeURIComponent(s.Course)}` +
+    `&entry.1808170822=${encodeURIComponent(s.Batch)}`;
 
-    window.open(url, "_blank");
-  };
+  window.open(url, "_blank");
+};
 
   return (
     <div className="course-page">
