@@ -17,7 +17,6 @@ const CoursePage = () => {
   const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
-
   const [department, setDepartment] = useState("");
   const [course, setCourse] = useState("");
   const [batch, setBatch] = useState("");
@@ -102,8 +101,9 @@ const CoursePage = () => {
     }
   };
 
-  /* GOOGLE FORM PREFILL */
+  /* GOOGLE FORM PREFILL — ALL 5 FIELDS */
   const openForm = (s) => {
+
     const base =
       "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
 
@@ -111,10 +111,9 @@ const CoursePage = () => {
       `${base}` +
       `&entry.2061477684=${encodeURIComponent(s.Name)}` +
       `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
-      `&entry.1161002506=${encodeURIComponent(course)}` +
-      `&entry.1972342123=${encodeURIComponent(batch)}` +
-      `&entry.1234567890=${encodeURIComponent(department)}`; 
-      // Replace last entry ID with your actual Department field ID
+      `&entry.1161002506=${encodeURIComponent(s.Course)}` +
+      `&entry.1972342123=${encodeURIComponent(s.Batch)}` +
+      `&entry.1234567890=${encodeURIComponent(s.Department)}`; 
 
     window.open(url, "_blank");
   };
@@ -123,7 +122,7 @@ const CoursePage = () => {
     <div className="course-page">
       <div className="course-card">
 
-        {/* TOP HEADER */}
+        {/* HEADER */}
         <div className="course-top">
           <img src="/ssmlogo.png" alt="logo" className="course-logo" />
           <div>
