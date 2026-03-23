@@ -105,7 +105,7 @@ const CoursePage = () => {
   const openForm = (s) => {
 
     const base =
-      "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url&entry.2061477684=syed&entry.1519676616=1111&entry.631301714=cse&entry.1161002506=btech&entry.1808170822=2019";
+      "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
 
     const url =
       `${base}` +
