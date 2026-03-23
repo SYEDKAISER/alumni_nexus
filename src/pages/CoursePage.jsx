@@ -112,8 +112,8 @@ const CoursePage = () => {
       `&entry.2061477684=${encodeURIComponent(s.Name)}` +
       `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
       `&entry.1161002506=${encodeURIComponent(s.Course)}` +
-      `&entry.1972342123=${encodeURIComponent(s.Batch)}` +
-      `&entry.1234567890=${encodeURIComponent(s.Department)}`; 
+      `&entry.1808170822=${encodeURIComponent(s.Batch)}` +
+      `&entry.1161002506=${encodeURIComponent(s.Department)}`; 
 
     window.open(url, "_blank");
   };
