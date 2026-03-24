@@ -8,7 +8,7 @@ const departmentCourseMap = {
   ECE: ["BTECH", "DIPLOMA", "MTECH"],
   ELECTRICAL: ["BTECH", "DIPLOMA"],
   MECHANICAL: ["BTECH", "DIPLOMA", "MTECH"],
-  "Computer Sciences": ["BCA", "MCA"],
+  "Computer Applications": ["BCA", "MCA"],
   "Business School": ["BBA", "MBA"]
 };
 
