@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar.jsx";
+// import Navbar from "../components/Navbar.jsx";
 import Sidebar from "../components/Sidebar";
 import "../styles/dashboard.css";
 
@@ -11,6 +11,7 @@ const DashboardLayout = ({ children }) => {
         <Sidebar />
 
         <div className="content">
+          
           {children}
         </div>
       </div>
