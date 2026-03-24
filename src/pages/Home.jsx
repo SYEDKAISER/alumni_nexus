@@ -8,7 +8,7 @@ const branches = [
   "ECE",
   "ELECTRICAL",
   "MECHANICAL",
-  "Computer Sciences",
+  "Computer Applications",
   "Business School"
 ];
 
