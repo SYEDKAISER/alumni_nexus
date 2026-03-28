@@ -34,7 +34,7 @@ const departmentCourseMap = {
     "MTECH"
   ],
 
-  "Computer Sciences": [
+  "Computer Applications": [
     "BCA",
     "MCA"
   ],
