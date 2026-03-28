@@ -3,17 +3,50 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
 /* DEPARTMENT → COURSE MAP */
+/* DIPLOMA TEMPORARILY DISABLED (COMMENTED, NOT REMOVED) */
+
 const departmentCourseMap = {
-  CSE: ["BTECH", "DIPLOMA"],
-  CIVIL: ["BTECH", "DIPLOMA"],
-  ECE: ["BTECH", "DIPLOMA", "MTECH"],
-  ELECTRICAL: ["BTECH", "DIPLOMA"],
-  MECHANICAL: ["BTECH", "DIPLOMA", "MTECH"],
-  "Computer Sciences": ["BCA", "MCA"],
-  "Business School": ["BBA", "MBA"]
+
+  CSE: [
+    "BTECH",
+    // "DIPLOMA",
+  ],
+
+  CIVIL: [
+    "BTECH",
+    // "DIPLOMA",
+  ],
+
+  ECE: [
+    "BTECH",
+    // "DIPLOMA",
+    "MTECH"
+  ],
+
+  ELECTRICAL: [
+    "BTECH",
+    // "DIPLOMA",
+  ],
+
+  MECHANICAL: [
+    "BTECH",
+    // "DIPLOMA",
+    "MTECH"
+  ],
+
+  "Computer Sciences": [
+    "BCA",
+    "MCA"
+  ],
+
+  "Business School": [
+    "BBA",
+    "MBA"
+  ]
 };
 
 const CoursePage = () => {
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -24,12 +57,17 @@ const CoursePage = () => {
   const [batch, setBatch] = useState("");
 
   const [students, setStudents] = useState([]);
-  const [submittedStudents, setSubmittedStudents] = useState([]);
+  const [submittedRecords, setSubmittedRecords] = useState([]);
+
   const [availableBatches, setAvailableBatches] = useState([]);
   const [search, setSearch] = useState("");
 
+
+
   /* SAFE NAVIGATION */
+
   useEffect(() => {
+
     const selectedDepartment = location.state?.branch;
 
     if (!selectedDepartment) {
@@ -38,19 +76,16 @@ const CoursePage = () => {
       setDepartment(selectedDepartment);
       setStep(2);
     }
+
   }, [location, navigate]);
 
-  /* RESET COURSE + BATCH WHEN DEPARTMENT CHANGES */
-  useEffect(() => {
-    setCourse("");
-    setBatch("");
-  }, [department]);
+
 
   /* FETCH MASTER STUDENT DATA */
+
   useEffect(() => {
-    fetch(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
-    )
+
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
@@ -58,21 +93,31 @@ const CoursePage = () => {
         const headers = rows[0].split(",").map(h => h.trim());
 
         const data = rows.slice(1).map(row => {
+
           const values = row.split(",");
           let obj = {};
+
           headers.forEach((h, i) => {
             obj[h] = values[i]?.trim();
           });
+
           return obj;
+
         });
 
         setStudents(data);
+
       });
+
   }, []);
 
-  /* FETCH GOOGLE FORM RESPONSES (FOR SUBMISSION STATUS) */
+
+
+  /* FETCH GOOGLE FORM RESPONSES */
+
   useEffect(() => {
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
+
+    fetch("PASTE_FORM_RESPONSE_CSV_LINK_HERE")
       .then(res => res.text())
       .then(text => {
 
@@ -80,61 +125,97 @@ const CoursePage = () => {
         const headers = rows[0].split(",").map(h => h.trim());
 
         const data = rows.slice(1).map(row => {
+
           const values = row.split(",");
           let obj = {};
+
           headers.forEach((h, i) => {
             obj[h] = values[i]?.trim();
           });
+
           return obj;
+
         });
 
-        const submittedList = data.map(
-          r => r["Enrollment No"]
-        );
+        setSubmittedRecords(data);
 
-        setSubmittedStudents(submittedList);
       });
+
   }, []);
 
+
+
   /* FILTER AVAILABLE BATCHES */
+
   useEffect(() => {
+
     if (!department || !course) return;
 
     const batches = students
-      .filter(
-        s =>
-          s.Department === department &&
-          s.Course === course
+      .filter(s =>
+        s.Course !== "DIPLOMA" &&   // extra safety filter
+        s.Department === department &&
+        s.Course === course
       )
       .map(s => s.Batch);
 
     setAvailableBatches([...new Set(batches)]);
+
   }, [department, course, students]);
 
-  /* FILTER STUDENTS */
-  const filteredStudents = students.filter(
-    s =>
-      s.Department === department &&
-      s.Course === course &&
-      s.Batch === batch &&
-      (
-        s.Name?.toLowerCase().includes(search.toLowerCase()) ||
-        s["Enrollment No"]
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
-      )
-  );
 
-  /* BACK BUTTON */
-  const handleBack = () => {
-    if (step === 2) {
-      navigate("/");
-    } else {
-      setStep(step - 1);
-    }
+
+  /* CHECK SUBMISSION STATUS USING MULTI-FIELD MATCH */
+
+  const isSubmitted = (student) => {
+
+    if (student.Course === "DIPLOMA") return false;
+
+    return submittedRecords.some(r =>
+
+      r["Enrollment No"] === student["Enrollment No"] &&
+      r["Course"] === student["Course"] &&
+      r["Department"] === student["Department"] &&
+      r["Batch"] === student["Batch"]
+
+    );
+
   };
 
+
+
+  /* FILTER STUDENTS */
+
+  const filteredStudents = students.filter(s =>
+
+    s.Course !== "DIPLOMA" &&
+
+    s.Department === department &&
+    s.Course === course &&
+    s.Batch === batch &&
+
+    (
+      s.Name?.toLowerCase().includes(search.toLowerCase()) ||
+      s["Enrollment No"]?.toLowerCase().includes(search.toLowerCase())
+    )
+
+  );
+
+
+
+  /* BACK BUTTON */
+
+  const handleBack = () => {
+
+    if (step === 2) navigate("/");
+    else setStep(step - 1);
+
+  };
+
+
+
   /* GOOGLE FORM PREFILL */
+
   const openForm = (s) => {
 
     const base =
@@ -149,168 +230,201 @@ const CoursePage = () => {
       `&entry.1808170822=${encodeURIComponent(s.Batch)}`;
 
     window.open(url, "_blank");
+
   };
 
+
+
   return (
+
     <div className="course-page">
+
       <div className="course-card">
 
         {/* HEADER */}
+
         <div className="course-top">
+
           <img
             src="/ssmlogo.png"
             alt="logo"
             className="course-logo"
           />
+
           <div>
+
             <h1 className="college-name">
               SSM College of Engineering
             </h1>
+
             <p className="portal-name">
               Alumni Portal
             </p>
+
           </div>
+
         </div>
 
+
+
         {/* BACK BUTTON */}
+
         {step > 1 && (
+
           <button
             className="back-btn"
             onClick={handleBack}
           >
             ← Back
           </button>
+
         )}
 
+
+
         {/* STEP 2 COURSE */}
+
         {step === 2 && (
+
           <>
             <h3>{department}</h3>
 
             <div className="course-pills">
-              {departmentCourseMap[
-                department
-              ].map(c => (
+
+              {departmentCourseMap[department].map(c => (
+
                 <span
                   key={c}
                   className="pill"
                   onClick={() => {
+
                     setCourse(c);
                     setStep(3);
+
                   }}
                 >
                   {c}
                 </span>
+
               ))}
+
             </div>
           </>
+
         )}
 
+
+
         {/* STEP 3 BATCH */}
+
         {step === 3 && (
+
           <>
-            <h3>
-              {department} / {course}
-            </h3>
+            <h3>{department} / {course}</h3>
 
             <select
               className="dropdown"
-              onChange={e => {
+              onChange={(e) => {
+
                 setBatch(e.target.value);
                 setStep(4);
+
               }}
             >
+
               <option value="">
                 Select Batch
               </option>
 
-              {availableBatches.map(
-                (b, i) => (
-                  <option key={i}>
-                    {b}
-                  </option>
-                )
-              )}
+              {availableBatches.map((b, i) => (
+
+                <option key={i}>
+                  {b}
+                </option>
+
+              ))}
+
             </select>
+
           </>
+
         )}
 
+
+
         {/* STEP 4 STUDENTS */}
+
         {step === 4 && (
+
           <>
-            <h3>
-              {department} / {course} /{" "}
-              {batch}
-            </h3>
+            <h3>{department} / {course} / {batch}</h3>
 
             <input
               className="search"
               placeholder="Search student..."
               value={search}
-              onChange={e =>
+              onChange={(e) =>
                 setSearch(e.target.value)
               }
             />
 
-            {filteredStudents.length ===
-            0 ? (
+            {filteredStudents.length === 0 ? (
+
               <p className="empty">
                 No students found
               </p>
+
             ) : (
-              filteredStudents.map(
-                (s, i) => {
 
-                  const submitted =
-                    submittedStudents.includes(
-                      s["Enrollment No"]
-                    );
+              filteredStudents.map((s, i) => {
 
-                  return (
-                    <div
-                      key={i}
-                      className="student-row"
+                const submitted = isSubmitted(s);
+
+                return (
+
+                  <div
+                    key={i}
+                    className="student-row"
+                  >
+
+                    <span>{s.Name}</span>
+
+                    <span>{s["Enrollment No"]}</span>
+
+                    <button
+                      className={
+                        submitted
+                          ? "btn submitted"
+                          : "btn"
+                      }
+                      disabled={submitted}
+                      onClick={() => openForm(s)}
                     >
-                      <span>
-                        {s.Name}
-                      </span>
 
-                      <span>
-                        {
-                          s[
-                            "Enrollment No"
-                          ]
-                        }
-                      </span>
+                      {submitted
+                        ? "Form Submitted"
+                        : "Fill Form"}
 
-                      <button
-                        className={
-                          submitted
-                            ? "btn submitted"
-                            : "btn"
-                        }
-                        disabled={
-                          submitted
-                        }
-                        onClick={() =>
-                          openForm(s)
-                        }
-                      >
-                        {submitted
-                          ? "Form Submitted"
-                          : "Fill Form"}
-                      </button>
-                    </div>
-                  );
-                }
-              )
+                    </button>
+
+                  </div>
+
+                );
+
+              })
+
             )}
+
           </>
+
         )}
 
       </div>
+
     </div>
+
   );
+
 };
 
 export default CoursePage;
