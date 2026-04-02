@@ -2,48 +2,33 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-/* DEPARTMENT → COURSE MAP */
-/* DIPLOMA TEMPORARILY DISABLED (COMMENTED, NOT REMOVED) */
+/* DIPLOMA TEMPORARILY DISABLED */
 
 const departmentCourseMap = {
 
-  CSE: [
-    "BTECH",
-    // "DIPLOMA",
-  ],
+  CSE: ["BTECH"],
+  CIVIL: ["BTECH"],
+  ECE: ["BTECH", "MTECH"],
+  ELECTRICAL: ["BTECH"],
+  MECHANICAL: ["BTECH", "MTECH"],
+  "Computer Sciences": ["BCA", "MCA"],
+  "Business School": ["BBA", "MBA"]
 
-  CIVIL: [
-    "BTECH",
-    // "DIPLOMA",
-  ],
-
-  ECE: [
-    "BTECH",
-    // "DIPLOMA",
-    "MTECH"
-  ],
-
-  ELECTRICAL: [
-    "BTECH",
-    // "DIPLOMA",
-  ],
-
-  MECHANICAL: [
-    "BTECH",
-    // "DIPLOMA",
-    "MTECH"
-  ],
-
-  "Computer Applications": [
-    "BCA",
-    "MCA"
-  ],
-
-  "Business School": [
-    "BBA",
-    "MBA"
-  ]
 };
+
+const normalize = (v) =>
+  (v || "").toString().trim().toUpperCase();
+
+/* UNIQUE KEY GENERATOR */
+
+const makeKey = (r) =>
+  [
+    normalize(r["Enrollment No"]),
+    normalize(r["Course"]),
+    normalize(r["Department"]),
+    normalize(r["Batch"])
+  ].join("|");
+
 
 const CoursePage = () => {
 
@@ -57,11 +42,10 @@ const CoursePage = () => {
   const [batch, setBatch] = useState("");
 
   const [students, setStudents] = useState([]);
-  const [submittedRecords, setSubmittedRecords] = useState([]);
+  const [submittedSet, setSubmittedSet] = useState(new Set());
 
   const [availableBatches, setAvailableBatches] = useState([]);
   const [search, setSearch] = useState("");
-
 
 
   /* SAFE NAVIGATION */
@@ -70,9 +54,8 @@ const CoursePage = () => {
 
     const selectedDepartment = location.state?.branch;
 
-    if (!selectedDepartment) {
-      navigate("/");
-    } else {
+    if (!selectedDepartment) navigate("/");
+    else {
       setDepartment(selectedDepartment);
       setStep(2);
     }
@@ -80,21 +63,25 @@ const CoursePage = () => {
   }, [location, navigate]);
 
 
-
   /* FETCH MASTER STUDENT DATA */
 
   useEffect(() => {
 
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
+    fetch(
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
+    )
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.trim().split("\n");
-        const headers = rows[0].split(",").map(h => h.trim());
+        const rows = text.split("\n");
 
-        const data = rows.slice(1).map(row => {
+        const headers =
+          rows[0].split(",").map(h => h.trim());
+
+        const parsed = rows.slice(1).map(row => {
 
           const values = row.split(",");
+
           let obj = {};
 
           headers.forEach((h, i) => {
@@ -105,44 +92,47 @@ const CoursePage = () => {
 
         });
 
-        setStudents(data);
+        setStudents(parsed);
 
       });
 
   }, []);
 
 
-
-  /* FETCH GOOGLE FORM RESPONSES */
+  /* FETCH FORM RESPONSES + BUILD LOOKUP SET */
 
   useEffect(() => {
 
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
+    fetch("PASTE_FORM_RESPONSE_CSV_LINK_HERE")
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.trim().split("\n");
-        const headers = rows[0].split(",").map(h => h.trim());
+        const rows = text.split("\n");
 
-        const data = rows.slice(1).map(row => {
+        const headers =
+          rows[0].split(",").map(h => h.trim());
+
+        const responseSet = new Set();
+
+        rows.slice(1).forEach(row => {
 
           const values = row.split(",");
+
           let obj = {};
 
           headers.forEach((h, i) => {
             obj[h] = values[i]?.trim();
           });
 
-          return obj;
+          responseSet.add(makeKey(obj));
 
         });
 
-        setSubmittedRecords(data);
+        setSubmittedSet(responseSet);
 
       });
 
   }, []);
-
 
 
   /* FILTER AVAILABLE BATCHES */
@@ -153,9 +143,8 @@ const CoursePage = () => {
 
     const batches = students
       .filter(s =>
-        s.Course !== "DIPLOMA" &&   // extra safety filter
-        s.Department === department &&
-        s.Course === course
+        normalize(s.Department) === normalize(department) &&
+        normalize(s.Course) === normalize(course)
       )
       .map(s => s.Batch);
 
@@ -164,43 +153,26 @@ const CoursePage = () => {
   }, [department, course, students]);
 
 
+  /* FAST SUBMISSION CHECK */
 
-  /* CHECK SUBMISSION STATUS USING MULTI-FIELD MATCH */
-
-  const isSubmitted = (student) => {
-
-    if (student.Course === "DIPLOMA") return false;
-
-    return submittedRecords.some(r =>
-
-      r["Enrollment No"] === student["Enrollment No"] &&
-      r["Course"] === student["Course"] &&
-      r["Department"] === student["Department"] &&
-      r["Batch"] === student["Batch"]
-
-    );
-
-  };
-
+  const isSubmitted = (student) =>
+    submittedSet.has(makeKey(student));
 
 
   /* FILTER STUDENTS */
 
   const filteredStudents = students.filter(s =>
 
-    s.Course !== "DIPLOMA" &&
-
-    s.Department === department &&
-    s.Course === course &&
-    s.Batch === batch &&
+    normalize(s.Department) === normalize(department) &&
+    normalize(s.Course) === normalize(course) &&
+    normalize(s.Batch) === normalize(batch) &&
 
     (
-      s.Name?.toLowerCase().includes(search.toLowerCase()) ||
-      s["Enrollment No"]?.toLowerCase().includes(search.toLowerCase())
+      normalize(s.Name).includes(normalize(search)) ||
+      normalize(s["Enrollment No"]).includes(normalize(search))
     )
 
   );
-
 
 
   /* BACK BUTTON */
@@ -211,7 +183,6 @@ const CoursePage = () => {
     else setStep(step - 1);
 
   };
-
 
 
   /* GOOGLE FORM PREFILL */
@@ -234,14 +205,11 @@ const CoursePage = () => {
   };
 
 
-
   return (
 
     <div className="course-page">
 
       <div className="course-card">
-
-        {/* HEADER */}
 
         <div className="course-top">
 
@@ -266,9 +234,6 @@ const CoursePage = () => {
         </div>
 
 
-
-        {/* BACK BUTTON */}
-
         {step > 1 && (
 
           <button
@@ -280,9 +245,6 @@ const CoursePage = () => {
 
         )}
 
-
-
-        {/* STEP 2 COURSE */}
 
         {step === 2 && (
 
@@ -309,13 +271,11 @@ const CoursePage = () => {
               ))}
 
             </div>
+
           </>
 
         )}
 
-
-
-        {/* STEP 3 BATCH */}
 
         {step === 3 && (
 
@@ -338,9 +298,7 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>
-                  {b}
-                </option>
+                <option key={i}>{b}</option>
 
               ))}
 
@@ -350,9 +308,6 @@ const CoursePage = () => {
 
         )}
 
-
-
-        {/* STEP 4 STUDENTS */}
 
         {step === 4 && (
 
@@ -400,11 +355,9 @@ const CoursePage = () => {
                       disabled={submitted}
                       onClick={() => openForm(s)}
                     >
-
                       {submitted
                         ? "Form Submitted"
                         : "Fill Form"}
-
                     </button>
 
                   </div>
