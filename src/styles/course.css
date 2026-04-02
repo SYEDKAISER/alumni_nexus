@@ -1,156 +1,173 @@
-/* RESET */
+/* GLOBAL RESET */
+
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
+
+
 /* PAGE BACKGROUND */
+
 .course-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+  padding: 40px 15px;
   background: linear-gradient(135deg, #1e3c72, #2a5298);
-  padding: 20px;
 }
+
+
 
 /* MAIN CARD */
+
 .course-card {
   width: 100%;
-  max-width: 600px;
-  background: white;
-  border-radius: 18px;
-  padding: 30px;
-  box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+  max-width: 780px;
+  background: #ffffff;
+  border-radius: 22px;
+  padding: 40px 45px;
+  box-shadow: 0 35px 70px rgba(0,0,0,0.25);
 }
 
-/* HEADER SECTION INSIDE CARD */
+
+
+/* HEADER */
+
 .course-top {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin-bottom: 18px;
 }
 
-/* LOGO */
 .course-logo {
-  width: 50px;
-  height: 50px;
-  object-fit: contain;
-}
-
-/* HEADER TEXT */
-.course-top div {
-  display: flex;
-  flex-direction: column;
+  width: 55px;
+  height: 55px;
 }
 
 .college-name {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 700;
   color: #1e3c72;
 }
 
 .portal-name {
-  font-size: 13px;
-  color: #555;
+  font-size: 14px;
+  color: #777;
 }
 
+
+
 /* BACK BUTTON */
+
 .back-btn {
   border: none;
-  background: none;
+  background: transparent;
   color: #1e3c72;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .back-btn:hover {
   text-decoration: underline;
 }
 
-/* STEP TITLES */
+
+
+/* PAGE TITLE */
+
 h3 {
-  margin-bottom: 15px;
+  font-size: 22px;
+  margin-bottom: 20px;
   color: #1e3c72;
 }
 
-/* COURSE SELECTION PILLS */
-.course-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
 
-.pill {
-  padding: 10px 16px;
-  border-radius: 20px;
-  background: #f0f0f0;
-  cursor: pointer;
-  transition: 0.3s ease;
-  font-weight: 500;
-}
 
-.pill:hover {
-  background: #1e3c72;
-  color: white;
-}
+/* SEARCH INPUT */
 
-/* DROPDOWN */
-.dropdown {
-  width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  margin-top: 10px;
-}
-
-/* SEARCH BOX */
 .search {
   width: 100%;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ccc;
-  margin: 15px 0;
-  font-size: 14px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid #d0d0d0;
+  margin-bottom: 25px;
+  font-size: 15px;
 }
 
-/* STUDENT LIST ROW */
+
+
+/* STUDENT ROW GRID STRUCTURE */
+
 .student-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr 120px 140px;
   align-items: center;
-  background: #f7f7f7;
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
+  gap: 12px;
+
+  background: #f4f6fa;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 14px;
+
   transition: 0.2s ease;
 }
 
+
+
+/* HOVER EFFECT */
+
 .student-row:hover {
-  background: #eef2f8;
+  background: #e9eef8;
 }
 
-/* BUTTON DEFAULT */
+
+
+/* NAME COLUMN */
+
+.student-row span:first-child {
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+
+
+/* ENROLLMENT COLUMN */
+
+.student-row span:nth-child(2) {
+  text-align: center;
+  font-weight: 600;
+  color: #1e3c72;
+}
+
+
+
+/* BUTTON STYLE */
+
 .btn {
+  justify-self: end;
   background: #1e3c72;
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 13px;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
 .btn:hover {
-  background: #16325c;
+  background: #162e57;
 }
 
+
+
 /* SUBMITTED BUTTON STATE */
+
 .btn.submitted {
   background: #28a745;
   cursor: not-allowed;
@@ -160,27 +177,76 @@ h3 {
   background: #28a745;
 }
 
+
+
 /* EMPTY MESSAGE */
+
 .empty {
   color: #777;
   font-size: 14px;
-  margin-top: 10px;
+  text-align: center;
 }
 
-/* MOBILE RESPONSIVE */
-@media (max-width: 480px) {
+
+
+/* COURSE SELECTION PILLS */
+
+.course-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pill {
+  padding: 10px 18px;
+  border-radius: 25px;
+  background: #eef1f7;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.pill:hover {
+  background: #1e3c72;
+  color: white;
+}
+
+
+
+/* DROPDOWN */
+
+.dropdown {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+  font-size: 15px;
+}
+
+
+
+/* TABLET RESPONSIVE */
+
+@media (max-width: 900px) {
 
   .course-card {
-    padding: 22px;
+    max-width: 95%;
+    padding: 30px 28px;
   }
 
-  .course-logo {
-    width: 42px;
-    height: 42px;
+}
+
+
+
+/* MOBILE RESPONSIVE */
+
+@media (max-width: 640px) {
+
+  .course-card {
+    padding: 25px 18px;
   }
 
   .college-name {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .portal-name {
@@ -188,24 +254,17 @@ h3 {
   }
 
   .student-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .student-row span:nth-child(2) {
+    text-align: left;
   }
 
   .btn {
     width: 100%;
-  }
-}
-
-/* TABLET RESPONSIVE */
-@media (max-width: 768px) {
-
-  .course-card {
-    max-width: 95%;
+    justify-self: stretch;
   }
 
-  .course-pills {
-    gap: 8px;
-  }
 }
