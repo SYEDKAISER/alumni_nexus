@@ -5,7 +5,6 @@ import "../styles/course.css";
 /* DIPLOMA TEMPORARILY DISABLED */
 
 const departmentCourseMap = {
-
   CSE: ["BTECH"],
   CIVIL: ["BTECH"],
   ECE: ["BTECH", "MTECH"],
@@ -13,13 +12,14 @@ const departmentCourseMap = {
   MECHANICAL: ["BTECH", "MTECH"],
   "Computer Sciences": ["BCA", "MCA"],
   "Business School": ["BBA", "MBA"]
-
 };
+
+/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
 
 const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
-/* UNIQUE KEY GENERATOR */
+/* UNIQUE MATCHING KEY */
 
 const makeKey = (r) =>
   [
@@ -28,7 +28,6 @@ const makeKey = (r) =>
     normalize(r["Department"]),
     normalize(r["Batch"])
   ].join("|");
-
 
 const CoursePage = () => {
 
@@ -48,19 +47,22 @@ const CoursePage = () => {
   const [search, setSearch] = useState("");
 
 
+
   /* SAFE NAVIGATION */
 
   useEffect(() => {
 
     const selectedDepartment = location.state?.branch;
 
-    if (!selectedDepartment) navigate("/");
-    else {
+    if (!selectedDepartment) {
+      navigate("/");
+    } else {
       setDepartment(selectedDepartment);
       setStep(2);
     }
 
   }, [location, navigate]);
+
 
 
   /* FETCH MASTER STUDENT DATA */
@@ -73,7 +75,7 @@ const CoursePage = () => {
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n");
+        const rows = text.split("\n").filter(Boolean);
 
         const headers =
           rows[0].split(",").map(h => h.trim());
@@ -99,7 +101,8 @@ const CoursePage = () => {
   }, []);
 
 
-  /* FETCH FORM RESPONSES + BUILD LOOKUP SET end */
+
+  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
 
   useEffect(() => {
 
@@ -107,32 +110,57 @@ const CoursePage = () => {
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n");
+        const rows = text.split("\n").filter(Boolean);
+
+        if (rows.length < 2) return;
 
         const headers =
-          rows[0].split(",").map(h => h.trim());
+          rows[0]
+            .split(",")
+            .map(h => h.trim().toLowerCase());
 
-        const responseSet = new Set();
+        const getIndex = (name) =>
+          headers.indexOf(name);
+
+        const enrollmentIndex =
+          getIndex("enrollment no");
+
+        const departmentIndex =
+          getIndex("department");
+
+        const courseIndex =
+          getIndex("course");
+
+        const batchIndex =
+          getIndex("batch");
+
+        const lookup = new Set();
 
         rows.slice(1).forEach(row => {
 
-          const values = row.split(",");
+          const cols = row.split(",");
 
-          let obj = {};
+          const record = {
+            "Enrollment No":
+              cols[enrollmentIndex],
+            Department:
+              cols[departmentIndex],
+            Course:
+              cols[courseIndex],
+            Batch:
+              cols[batchIndex]
+          };
 
-          headers.forEach((h, i) => {
-            obj[h] = values[i]?.trim();
-          });
-
-          responseSet.add(makeKey(obj));
+          lookup.add(makeKey(record));
 
         });
 
-        setSubmittedSet(responseSet);
+        setSubmittedSet(lookup);
 
       });
 
   }, []);
+
 
 
   /* FILTER AVAILABLE BATCHES */
@@ -153,10 +181,12 @@ const CoursePage = () => {
   }, [department, course, students]);
 
 
+
   /* FAST SUBMISSION CHECK */
 
   const isSubmitted = (student) =>
     submittedSet.has(makeKey(student));
+
 
 
   /* FILTER STUDENTS */
@@ -175,14 +205,18 @@ const CoursePage = () => {
   );
 
 
+
   /* BACK BUTTON */
 
   const handleBack = () => {
 
-    if (step === 2) navigate("/");
-    else setStep(step - 1);
+    if (step === 2)
+      navigate("/");
+    else
+      setStep(step - 1);
 
   };
+
 
 
   /* GOOGLE FORM PREFILL */
@@ -203,6 +237,7 @@ const CoursePage = () => {
     window.open(url, "_blank");
 
   };
+
 
 
   return (
@@ -234,6 +269,7 @@ const CoursePage = () => {
         </div>
 
 
+
         {step > 1 && (
 
           <button
@@ -244,6 +280,7 @@ const CoursePage = () => {
           </button>
 
         )}
+
 
 
         {step === 2 && (
@@ -277,6 +314,7 @@ const CoursePage = () => {
         )}
 
 
+
         {step === 3 && (
 
           <>
@@ -298,7 +336,9 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>{b}</option>
+                <option key={i}>
+                  {b}
+                </option>
 
               ))}
 
@@ -307,6 +347,7 @@ const CoursePage = () => {
           </>
 
         )}
+
 
 
         {step === 4 && (
@@ -333,7 +374,8 @@ const CoursePage = () => {
 
               filteredStudents.map((s, i) => {
 
-                const submitted = isSubmitted(s);
+                const submitted =
+                  isSubmitted(s);
 
                 return (
 
@@ -344,7 +386,9 @@ const CoursePage = () => {
 
                     <span>{s.Name}</span>
 
-                    <span>{s["Enrollment No"]}</span>
+                    <span>
+                      {s["Enrollment No"]}
+                    </span>
 
                     <button
                       className={
