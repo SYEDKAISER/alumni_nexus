@@ -103,7 +103,7 @@ const CoursePage = () => {
 
   useEffect(() => {
 
-    fetch("PASTE_FORM_RESPONSE_CSV_LINK_HERE")
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
