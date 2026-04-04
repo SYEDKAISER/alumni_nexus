@@ -2,32 +2,116 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-/* DIPLOMA TEMPORARILY DISABLED */
 
-const departmentCourseMap = {
-  CSE: ["BTECH"],
-  CIVIL: ["BTECH"],
-  ECE: ["BTECH", "MTECH"],
-  ELECTRICAL: ["BTECH"],
-  MECHANICAL: ["BTECH", "MTECH"],
-  "Computer Sciences": ["BCA", "MCA"],
-  "Business School": ["BBA", "MBA"]
-};
-
-/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
+/* ================= NORMALIZER ================= */
 
 const normalize = (v) =>
-  (v || "").toString().trim().toUpperCase();
+  (v || "")
+    .toString()
+    .trim()
+    .replace(/\s+/g, " ")
+    .toUpperCase();
 
-/* UNIQUE MATCHING KEY */
+
+/* ================= BRANCH → DEPARTMENT ================= */
+
+const branchToDepartment = (branch) => {
+
+  const b = normalize(branch);
+
+  if (
+    b.includes("ARCHITECTURAL ASSISTANTSHIP") ||
+    b.includes("DRAFTSMAN") ||
+    b === "CIVIL"
+  )
+    return "CIVIL";
+
+  if (b === "IT")
+    return "CSE";
+
+  if (b.includes("SECRETARIAL"))
+    return "SECRETARIAL PRACTICE & OFFICE MANAGEMENT";
+
+  if (b === "CSE")
+    return "CSE";
+
+  if (b === "ECE")
+    return "ECE";
+
+  if (b === "ELECTRICAL")
+    return "ELECTRICAL";
+
+  if (b === "MECHANICAL")
+    return "MECHANICAL";
+
+  return b;
+};
+
+
+/* ================= BRANCH → COURSE ================= */
+
+const branchToCourse = (branch) => {
+
+  const b = normalize(branch);
+
+  if (b.includes("ARCHITECTURAL ASSISTANTSHIP"))
+    return "ARCHITECTURAL ASSISTANTSHIP";
+
+  if (b.includes("DRAFTSMAN"))
+    return "DRAFTSMAN CIVIL";
+
+  if (b.includes("SECRETARIAL"))
+    return "SECRETARIAL PRACTICE & OFFICE MANAGEMENT";
+
+  return "DIPLOMA";
+};
+
+
+/* ================= DEPARTMENT → COURSE MAP ================= */
+
+const departmentCourseMap = {
+
+  CSE: [
+    "DIPLOMA"
+  ],
+
+  CIVIL: [
+    "DIPLOMA",
+    "ARCHITECTURAL ASSISTANTSHIP",
+    "DRAFTSMAN CIVIL"
+  ],
+
+  ECE: [
+    "DIPLOMA"
+  ],
+
+  ELECTRICAL: [
+    "DIPLOMA"
+  ],
+
+  MECHANICAL: [
+    "DIPLOMA"
+  ],
+
+  "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": [
+    "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
+  ]
+
+};
+
+
+/* ================= UNIQUE KEY ================= */
 
 const makeKey = (r) =>
-  [
-    normalize(r["Enrollment No"]),
-    normalize(r["Course"]),
-    normalize(r["Department"]),
-    normalize(r["Batch"])
-  ].join("|");
+[
+  normalize(r["Enrollment No"]),
+  normalize(branchToDepartment(r.Branch)),
+  normalize(branchToCourse(r.Branch)),
+  normalize(r.Batch)
+].join("|");
+
+
+/* ================= COMPONENT ================= */
 
 const CoursePage = () => {
 
@@ -47,16 +131,16 @@ const CoursePage = () => {
   const [search, setSearch] = useState("");
 
 
-
-  /* SAFE NAVIGATION */
+  /* ================= LOAD DEPARTMENT ================= */
 
   useEffect(() => {
 
-    const selectedDepartment = location.state?.branch;
+    const selectedDepartment =
+      normalize(location.state?.branch);
 
-    if (!selectedDepartment) {
+    if (!selectedDepartment)
       navigate("/");
-    } else {
+    else {
       setDepartment(selectedDepartment);
       setStep(2);
     }
@@ -64,35 +148,34 @@ const CoursePage = () => {
   }, [location, navigate]);
 
 
-
-  /* FETCH MASTER STUDENT DATA */
+  /* ================= FETCH MASTER DATA ================= */
 
   useEffect(() => {
 
-    fetch(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
-    )
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n").filter(Boolean);
+        const rows =
+          text.split("\n").filter(Boolean);
 
         const headers =
           rows[0].split(",").map(h => h.trim());
 
-        const parsed = rows.slice(1).map(row => {
+        const parsed =
+          rows.slice(1).map(row => {
 
-          const values = row.split(",");
+            const values = row.split(",");
 
-          let obj = {};
+            let obj = {};
 
-          headers.forEach((h, i) => {
-            obj[h] = values[i]?.trim();
+            headers.forEach((h, i) => {
+              obj[h] = values[i]?.trim();
+            });
+
+            return obj;
+
           });
-
-          return obj;
-
-        });
 
         setStudents(parsed);
 
@@ -101,8 +184,7 @@ const CoursePage = () => {
   }, []);
 
 
-
-  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
+  /* ================= FETCH FORM RESPONSES ================= */
 
   useEffect(() => {
 
@@ -110,29 +192,30 @@ const CoursePage = () => {
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n").filter(Boolean);
+        const rows =
+          text.split("\n").filter(Boolean);
 
         if (rows.length < 2) return;
 
         const headers =
-          rows[0]
-            .split(",")
-            .map(h => h.trim().toLowerCase());
+          rows[0].split(",").map(h =>
+            normalize(h)
+          );
 
         const getIndex = (name) =>
-          headers.indexOf(name);
+          headers.indexOf(normalize(name));
 
         const enrollmentIndex =
-          getIndex("enrollment no");
+          getIndex("Enrollment No");
 
         const departmentIndex =
-          getIndex("department");
+          getIndex("Department");
 
         const courseIndex =
-          getIndex("course");
+          getIndex("Course");
 
         const batchIndex =
-          getIndex("batch");
+          getIndex("Batch");
 
         const lookup = new Set();
 
@@ -140,18 +223,17 @@ const CoursePage = () => {
 
           const cols = row.split(",");
 
-          const record = {
-            "Enrollment No":
-              cols[enrollmentIndex],
-            Department:
-              cols[departmentIndex],
-            Course:
-              cols[courseIndex],
-            Batch:
-              cols[batchIndex]
-          };
+          lookup.add(
 
-          lookup.add(makeKey(record));
+            [
+              normalize(cols[enrollmentIndex]),
+              normalize(cols[departmentIndex]),
+              normalize(cols[courseIndex]),
+              normalize(cols[batchIndex])
+
+            ].join("|")
+
+          );
 
         });
 
@@ -162,8 +244,7 @@ const CoursePage = () => {
   }, []);
 
 
-
-  /* FILTER AVAILABLE BATCHES */
+  /* ================= FILTER BATCHES ================= */
 
   useEffect(() => {
 
@@ -171,8 +252,10 @@ const CoursePage = () => {
 
     const batches = students
       .filter(s =>
-        normalize(s.Department) === normalize(department) &&
-        normalize(s.Course) === normalize(course)
+
+        branchToDepartment(s.Branch) === department &&
+        branchToCourse(s.Branch) === normalize(course)
+
       )
       .map(s => s.Batch);
 
@@ -181,32 +264,33 @@ const CoursePage = () => {
   }, [department, course, students]);
 
 
-
-  /* FAST SUBMISSION CHECK */
+  /* ================= CHECK SUBMISSION ================= */
 
   const isSubmitted = (student) =>
     submittedSet.has(makeKey(student));
 
 
+  /* ================= FILTER STUDENTS ================= */
 
-  /* FILTER STUDENTS */
+  const filteredStudents =
+    students.filter(s =>
 
-  const filteredStudents = students.filter(s =>
+      branchToDepartment(s.Branch) === department &&
+      branchToCourse(s.Branch) === normalize(course) &&
+      normalize(s.Batch) === normalize(batch) &&
 
-    normalize(s.Department) === normalize(department) &&
-    normalize(s.Course) === normalize(course) &&
-    normalize(s.Batch) === normalize(batch) &&
+      (
+        normalize(s.Name)
+          .includes(normalize(search)) ||
 
-    (
-      normalize(s.Name).includes(normalize(search)) ||
-      normalize(s["Enrollment No"]).includes(normalize(search))
-    )
+        normalize(s["Enrollment No"])
+          .includes(normalize(search))
+      )
 
-  );
-
+    );
 
 
-  /* BACK BUTTON */
+  /* ================= BACK BUTTON ================= */
 
   const handleBack = () => {
 
@@ -218,8 +302,7 @@ const CoursePage = () => {
   };
 
 
-
-  /* GOOGLE FORM PREFILL */
+  /* ================= GOOGLE FORM PREFILL ================= */
 
   const openForm = (s) => {
 
@@ -230,8 +313,8 @@ const CoursePage = () => {
       `${base}` +
       `&entry.2061477684=${encodeURIComponent(s.Name)}` +
       `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
-      `&entry.631301714=${encodeURIComponent(s.Department)}` +
-      `&entry.1161002506=${encodeURIComponent(s.Course)}` +
+      `&entry.631301714=${encodeURIComponent(branchToDepartment(s.Branch))}` +
+      `&entry.1161002506=${encodeURIComponent(branchToCourse(s.Branch))}` +
       `&entry.1808170822=${encodeURIComponent(s.Batch)}`;
 
     window.open(url, "_blank");
@@ -239,36 +322,13 @@ const CoursePage = () => {
   };
 
 
+  /* ================= UI ================= */
 
   return (
 
     <div className="course-page">
 
       <div className="course-card">
-
-        <div className="course-top">
-
-          <img
-            src="/ssmlogo.png"
-            alt="logo"
-            className="course-logo"
-          />
-
-          <div>
-
-            <h1 className="college-name">
-              SSM College of Engineering
-            </h1>
-
-            <p className="portal-name">
-              Alumni Portal
-            </p>
-
-          </div>
-
-        </div>
-
-
 
         {step > 1 && (
 
@@ -282,7 +342,6 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 2 && (
 
           <>
@@ -290,7 +349,7 @@ const CoursePage = () => {
 
             <div className="course-pills">
 
-              {departmentCourseMap[department].map(c => (
+              {departmentCourseMap[department]?.map(c => (
 
                 <span
                   key={c}
@@ -314,7 +373,6 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 3 && (
 
           <>
@@ -336,9 +394,7 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>
-                  {b}
-                </option>
+                <option key={i}>{b}</option>
 
               ))}
 
@@ -349,11 +405,12 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 4 && (
 
           <>
-            <h3>{department} / {course} / {batch}</h3>
+            <h3>
+              {department} / {course} / {batch}
+            </h3>
 
             <input
               className="search"
@@ -364,53 +421,47 @@ const CoursePage = () => {
               }
             />
 
-            {filteredStudents.length === 0 ? (
+            {filteredStudents.length === 0
+              ? <p>No students found</p>
+              : filteredStudents.map((s, i) => {
 
-              <p className="empty">
-                No students found
-              </p>
+                  const submitted =
+                    isSubmitted(s);
 
-            ) : (
+                  return (
 
-              filteredStudents.map((s, i) => {
-
-                const submitted =
-                  isSubmitted(s);
-
-                return (
-
-                  <div
-                    key={i}
-                    className="student-row"
-                  >
-
-                    <span>{s.Name}</span>
-
-                    <span>
-                      {s["Enrollment No"]}
-                    </span>
-
-                    <button
-                      className={
-                        submitted
-                          ? "btn submitted"
-                          : "btn"
-                      }
-                      disabled={submitted}
-                      onClick={() => openForm(s)}
+                    <div
+                      key={i}
+                      className="student-row"
                     >
-                      {submitted
-                        ? "Form Submitted"
-                        : "Fill Form"}
-                    </button>
 
-                  </div>
+                      <span>{s.Name}</span>
 
-                );
+                      <span>
+                        {s["Enrollment No"]}
+                      </span>
 
-              })
+                      <button
+                        className={
+                          submitted
+                            ? "btn submitted"
+                            : "btn"
+                        }
+                        disabled={submitted}
+                        onClick={() =>
+                          openForm(s)
+                        }
+                      >
+                        {submitted
+                          ? "Form Submitted"
+                          : "Fill Form"}
+                      </button>
 
-            )}
+                    </div>
+
+                  );
+
+                })}
 
           </>
 
@@ -423,5 +474,6 @@ const CoursePage = () => {
   );
 
 };
+
 
 export default CoursePage;
