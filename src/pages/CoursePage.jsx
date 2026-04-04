@@ -2,24 +2,49 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-/* DIPLOMA TEMPORARILY DISABLED */
+
+/*
+COURSE LEVEL MAPPING
+Only shows DIPLOMA / BTECH / MTECH etc.
+Actual filtering still uses CSV Course column
+*/
 
 const departmentCourseMap = {
-  CSE: ["BTECH"],
-  CIVIL: ["BTECH"],
-  ECE: ["BTECH", "MTECH"],
-  ELECTRICAL: ["BTECH"],
-  MECHANICAL: ["BTECH", "MTECH"],
+
+  CSE: ["BTECH", "DIPLOMA"],
+
+  IT: ["DIPLOMA"],
+
+  CIVIL: ["BTECH", "DIPLOMA"],
+
+  DRAFTSMANSHIP: ["DIPLOMA"],
+
+  "ARCHITECTURAL ASSISTANTSHIP": ["DIPLOMA"],
+
+  ECE: ["BTECH", "MTECH", "DIPLOMA"],
+
+  ELECTRICAL: ["BTECH", "DIPLOMA"],
+
+  MECHANICAL: ["BTECH", "MTECH", "DIPLOMA"],
+
+  "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": [
+    "DIPLOMA"
+  ],
+
   "Computer Applications": ["BCA", "MCA"],
+
   "Business School": ["BBA", "MBA"]
+
 };
 
-/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
+
+/* NORMALIZER */
 
 const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
-/* UNIQUE MATCHING KEY */
+
+/* UNIQUE MATCH KEY */
 
 const makeKey = (r) =>
   [
@@ -28,6 +53,7 @@ const makeKey = (r) =>
     normalize(r["Department"]),
     normalize(r["Batch"])
   ].join("|");
+
 
 const CoursePage = () => {
 
@@ -47,16 +73,16 @@ const CoursePage = () => {
   const [search, setSearch] = useState("");
 
 
-
   /* SAFE NAVIGATION */
 
   useEffect(() => {
 
-    const selectedDepartment = location.state?.branch;
+    const selectedDepartment =
+      location.state?.branch;
 
-    if (!selectedDepartment) {
+    if (!selectedDepartment)
       navigate("/");
-    } else {
+    else {
       setDepartment(selectedDepartment);
       setStep(2);
     }
@@ -64,8 +90,7 @@ const CoursePage = () => {
   }, [location, navigate]);
 
 
-
-  /* FETCH MASTER STUDENT DATA */
+  /* FETCH MASTER CSV */
 
   useEffect(() => {
 
@@ -75,24 +100,26 @@ const CoursePage = () => {
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n").filter(Boolean);
+        const rows =
+          text.split("\n").filter(Boolean);
 
         const headers =
           rows[0].split(",").map(h => h.trim());
 
-        const parsed = rows.slice(1).map(row => {
+        const parsed =
+          rows.slice(1).map(row => {
 
-          const values = row.split(",");
+            const values = row.split(",");
 
-          let obj = {};
+            let obj = {};
 
-          headers.forEach((h, i) => {
-            obj[h] = values[i]?.trim();
+            headers.forEach((h, i) => {
+              obj[h] = values[i]?.trim();
+            });
+
+            return obj;
+
           });
-
-          return obj;
-
-        });
 
         setStudents(parsed);
 
@@ -101,16 +128,18 @@ const CoursePage = () => {
   }, []);
 
 
-
-  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
+  /* FETCH FORM RESPONSES */
 
   useEffect(() => {
 
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
+    fetch(
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv"
+    )
       .then(res => res.text())
       .then(text => {
 
-        const rows = text.split("\n").filter(Boolean);
+        const rows =
+          text.split("\n").filter(Boolean);
 
         if (rows.length < 2) return;
 
@@ -141,14 +170,19 @@ const CoursePage = () => {
           const cols = row.split(",");
 
           const record = {
+
             "Enrollment No":
               cols[enrollmentIndex],
+
             Department:
               cols[departmentIndex],
+
             Course:
               cols[courseIndex],
+
             Batch:
               cols[batchIndex]
+
           };
 
           lookup.add(makeKey(record));
@@ -162,48 +196,64 @@ const CoursePage = () => {
   }, []);
 
 
-
-  /* FILTER AVAILABLE BATCHES */
+  /* FILTER BATCHES */
 
   useEffect(() => {
 
-    if (!department || !course) return;
+    if (!department || !course)
+      return;
 
-    const batches = students
-      .filter(s =>
-        normalize(s.Department) === normalize(department) &&
-        normalize(s.Course) === normalize(course)
-      )
-      .map(s => s.Batch);
+    const batches =
+      students
+        .filter(s =>
+          normalize(s.Department) ===
+          normalize(department) &&
 
-    setAvailableBatches([...new Set(batches)]);
+          normalize(s.Course).includes(
+            normalize(course)
+          )
+        )
+        .map(s => s.Batch);
+
+    setAvailableBatches(
+      [...new Set(batches)]
+    );
 
   }, [department, course, students]);
 
 
-
-  /* FAST SUBMISSION CHECK */
+  /* CHECK SUBMITTED */
 
   const isSubmitted = (student) =>
     submittedSet.has(makeKey(student));
 
 
-
   /* FILTER STUDENTS */
 
-  const filteredStudents = students.filter(s =>
+  const filteredStudents =
+    students.filter(s =>
 
-    normalize(s.Department) === normalize(department) &&
-    normalize(s.Course) === normalize(course) &&
-    normalize(s.Batch) === normalize(batch) &&
+      normalize(s.Department) ===
+        normalize(department) &&
 
-    (
-      normalize(s.Name).includes(normalize(search)) ||
-      normalize(s["Enrollment No"]).includes(normalize(search))
-    )
+      normalize(s.Course).includes(
+        normalize(course)
+      ) &&
 
-  );
+      normalize(s.Batch) ===
+        normalize(batch) &&
 
+      (
+        normalize(s.Name).includes(
+          normalize(search)
+        ) ||
+
+        normalize(s["Enrollment No"]).includes(
+          normalize(search)
+        )
+      )
+
+    );
 
 
   /* BACK BUTTON */
@@ -218,8 +268,7 @@ const CoursePage = () => {
   };
 
 
-
-  /* GOOGLE FORM PREFILL */
+  /* PREFILL FORM */
 
   const openForm = (s) => {
 
@@ -237,7 +286,6 @@ const CoursePage = () => {
     window.open(url, "_blank");
 
   };
-
 
 
   return (
@@ -269,7 +317,6 @@ const CoursePage = () => {
         </div>
 
 
-
         {step > 1 && (
 
           <button
@@ -282,7 +329,6 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 2 && (
 
           <>
@@ -290,7 +336,9 @@ const CoursePage = () => {
 
             <div className="course-pills">
 
-              {departmentCourseMap[department].map(c => (
+              {departmentCourseMap[
+                department
+              ].map(c => (
 
                 <span
                   key={c}
@@ -314,11 +362,12 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 3 && (
 
           <>
-            <h3>{department} / {course}</h3>
+            <h3>
+              {department} / {course}
+            </h3>
 
             <select
               className="dropdown"
@@ -349,11 +398,12 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 4 && (
 
           <>
-            <h3>{department} / {course} / {batch}</h3>
+            <h3>
+              {department} / {course} / {batch}
+            </h3>
 
             <input
               className="search"
