@@ -2,32 +2,93 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-/* DIPLOMA TEMPORARILY DISABLED */
+
+/*
+DEPARTMENT → COURSE UI MAP
+Sheet still stores DIPLOMA only
+Specializations handled internally
+*/
 
 const departmentCourseMap = {
-  CSE: ["BTECH"],
-  CIVIL: ["BTECH"],
-  ECE: ["BTECH", "MTECH"],
-  ELECTRICAL: ["BTECH"],
-  MECHANICAL: ["BTECH", "MTECH"],
-  "Computer Sciences": ["BCA", "MCA"],
-  "Business School": ["BBA", "MBA"]
+
+  CSE: [
+    "BTECH",
+    "DIPLOMA (CSE / IT)"
+  ],
+
+  CIVIL: [
+    "BTECH",
+    "DIPLOMA (CIVIL)",
+    "ARCHITECTURAL ASSISTANTSHIP",
+    "DRAFTSMAN CIVIL"
+  ],
+
+  ECE: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA (ECE)"
+  ],
+
+  ELECTRICAL: [
+    "BTECH",
+    "DIPLOMA (ELECTRICAL)"
+  ],
+
+  MECHANICAL: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA (MECHANICAL)"
+  ],
+
+  "Computer Sciences": [
+    "BCA",
+    "MCA"
+  ],
+
+  "Business School": [
+    "BBA",
+    "MBA"
+  ],
+
+  "Secretarial Practice & Office Management": [
+    "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
+  ]
+
 };
 
-/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
 
-const normalize = (v) =>
+
+/* NORMALIZER */
+
+const normalize = v =>
   (v || "").toString().trim().toUpperCase();
 
-/* UNIQUE MATCHING KEY */
 
-const makeKey = (r) =>
-  [
-    normalize(r["Enrollment No"]),
-    normalize(r["Course"]),
-    normalize(r["Department"]),
-    normalize(r["Batch"])
-  ].join("|");
+
+/* KEY BUILDER */
+
+const makeKey = r =>
+[
+  normalize(r["Enrollment No"]),
+  normalize(r["Course"]),
+  normalize(r["Department"]),
+  normalize(r["Batch"])
+].join("|");
+
+
+
+/* MAP UI COURSE → CSV COURSE */
+
+const resolveSheetCourse = (course) => {
+
+  if (course.includes("DIPLOMA"))
+    return "DIPLOMA";
+
+  return course;
+
+};
+
+
 
 const CoursePage = () => {
 
@@ -48,15 +109,15 @@ const CoursePage = () => {
 
 
 
-  /* SAFE NAVIGATION */
+  /* LOAD DEPARTMENT FROM HOME PAGE */
 
   useEffect(() => {
 
     const selectedDepartment = location.state?.branch;
 
-    if (!selectedDepartment) {
+    if (!selectedDepartment)
       navigate("/");
-    } else {
+    else {
       setDepartment(selectedDepartment);
       setStep(2);
     }
@@ -65,13 +126,11 @@ const CoursePage = () => {
 
 
 
-  /* FETCH MASTER STUDENT DATA */
+  /* FETCH MASTER STUDENT SHEET */
 
   useEffect(() => {
 
-    fetch(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
-    )
+    fetch("YOUR_STUDENT_SHEET_CSV_LINK")
       .then(res => res.text())
       .then(text => {
 
@@ -86,9 +145,9 @@ const CoursePage = () => {
 
           let obj = {};
 
-          headers.forEach((h, i) => {
-            obj[h] = values[i]?.trim();
-          });
+          headers.forEach((h, i) =>
+            obj[h] = values[i]?.trim()
+          );
 
           return obj;
 
@@ -102,11 +161,11 @@ const CoursePage = () => {
 
 
 
-  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
+  /* FETCH GOOGLE FORM RESPONSES */
 
   useEffect(() => {
 
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
+    fetch("YOUR_FORM_RESPONSES_CSV_LINK")
       .then(res => res.text())
       .then(text => {
 
@@ -119,7 +178,7 @@ const CoursePage = () => {
             .split(",")
             .map(h => h.trim().toLowerCase());
 
-        const getIndex = (name) =>
+        const getIndex = name =>
           headers.indexOf(name);
 
         const enrollmentIndex =
@@ -169,10 +228,16 @@ const CoursePage = () => {
 
     if (!department || !course) return;
 
+    const sheetCourse =
+      resolveSheetCourse(course);
+
     const batches = students
       .filter(s =>
+
         normalize(s.Department) === normalize(department) &&
-        normalize(s.Course) === normalize(course)
+
+        normalize(s.Course) === normalize(sheetCourse)
+
       )
       .map(s => s.Batch);
 
@@ -182,27 +247,38 @@ const CoursePage = () => {
 
 
 
-  /* FAST SUBMISSION CHECK */
+  /* CHECK SUBMISSION STATUS */
 
-  const isSubmitted = (student) =>
+  const isSubmitted = student =>
     submittedSet.has(makeKey(student));
 
 
 
   /* FILTER STUDENTS */
 
-  const filteredStudents = students.filter(s =>
+  const filteredStudents = students.filter(s => {
 
-    normalize(s.Department) === normalize(department) &&
-    normalize(s.Course) === normalize(course) &&
-    normalize(s.Batch) === normalize(batch) &&
+    const sheetCourse =
+      resolveSheetCourse(course);
 
-    (
-      normalize(s.Name).includes(normalize(search)) ||
-      normalize(s["Enrollment No"]).includes(normalize(search))
-    )
+    return (
 
-  );
+      normalize(s.Department) === normalize(department) &&
+
+      normalize(s.Course) === normalize(sheetCourse) &&
+
+      normalize(s.Batch) === normalize(batch) &&
+
+      (
+        normalize(s.Name).includes(normalize(search)) ||
+
+        normalize(s["Enrollment No"])
+          .includes(normalize(search))
+      )
+
+    );
+
+  });
 
 
 
@@ -221,7 +297,7 @@ const CoursePage = () => {
 
   /* GOOGLE FORM PREFILL */
 
-  const openForm = (s) => {
+  const openForm = s => {
 
     const base =
       "https://docs.google.com/forms/d/e/1FAIpQLSfRBkbeqT0XhyeLfHRKn8i7eA1Neip8Y3U63QM7g8aWv6_Lmg/viewform?usp=pp_url";
@@ -336,9 +412,7 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>
-                  {b}
-                </option>
+                <option key={i}>{b}</option>
 
               ))}
 
