@@ -2,32 +2,121 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-/* DIPLOMA TEMPORARILY DISABLED */
+
+/* DEPARTMENT → COURSE MAP */
 
 const departmentCourseMap = {
-  CSE: ["BTECH"],
-  CIVIL: ["BTECH"],
-  ECE: ["BTECH", "MTECH"],
-  ELECTRICAL: ["BTECH"],
-  MECHANICAL: ["BTECH", "MTECH"],
-  "Computer Sciences": ["BCA", "MCA"],
-  "Business School": ["BBA", "MBA"]
+
+  CSE: [
+    "BTECH",
+    "DIPLOMA"
+  ],
+
+  CIVIL: [
+    "BTECH",
+    "DIPLOMA",
+    "ARCHITECTURAL ASSISTANTSHIP",
+    "DRAFTSMAN CIVIL"
+  ],
+
+  ECE: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA"
+  ],
+
+  ELECTRICAL: [
+    "BTECH",
+    "DIPLOMA"
+  ],
+
+  MECHANICAL: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA"
+  ],
+
+  "Computer Applications": [
+    "BCA",
+    "MCA"
+  ],
+
+  "Business School": [
+    "BBA",
+    "MBA"
+  ],
+
+  "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": [
+    "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
+  ]
+
 };
 
-/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
+
+/* NORMALIZER */
 
 const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
-/* UNIQUE MATCHING KEY */
+
+/* BRANCH → DEPARTMENT MAPPER */
+
+const branchToDepartment = (branch) => {
+
+  const b = normalize(branch);
+
+  if (
+    b === "ARCHITECTURAL ASSISTANTSHIP" ||
+    b === "DRAFTSMANSHIP CIVIL" ||
+    b === "DRAFTSMAN CIVIL" ||
+    b === "CIVIL"
+  )
+    return "CIVIL";
+
+  if (b === "IT")
+    return "CSE";
+
+  if (b === "SECRETARIAL PRACTICE & OFFICE MANAGEMENT")
+    return "SECRETARIAL PRACTICE & OFFICE MANAGEMENT";
+
+  return b;
+
+};
+
+
+/* BRANCH → COURSE MAPPER */
+
+const branchToCourse = (branch) => {
+
+  const b = normalize(branch);
+
+  if (b === "ARCHITECTURAL ASSISTANTSHIP")
+    return "ARCHITECTURAL ASSISTANTSHIP";
+
+  if (
+    b === "DRAFTSMANSHIP CIVIL" ||
+    b === "DRAFTSMAN CIVIL"
+  )
+    return "DRAFTSMAN CIVIL";
+
+  if (b === "SECRETARIAL PRACTICE & OFFICE MANAGEMENT")
+    return "SECRETARIAL PRACTICE & OFFICE MANAGEMENT";
+
+  return "DIPLOMA";
+
+};
+
+
+/* UNIQUE MATCH KEY */
 
 const makeKey = (r) =>
-  [
-    normalize(r["Enrollment No"]),
-    normalize(r["Course"]),
-    normalize(r["Department"]),
-    normalize(r["Batch"])
-  ].join("|");
+[
+  normalize(r["Enrollment No"]),
+  normalize(r["Course"]),
+  normalize(r["Department"]),
+  normalize(r["Batch"])
+].join("|");
+
 
 const CoursePage = () => {
 
@@ -47,7 +136,6 @@ const CoursePage = () => {
   const [search, setSearch] = useState("");
 
 
-
   /* SAFE NAVIGATION */
 
   useEffect(() => {
@@ -57,21 +145,18 @@ const CoursePage = () => {
     if (!selectedDepartment) {
       navigate("/");
     } else {
-      setDepartment(selectedDepartment);
+      setDepartment(normalize(selectedDepartment));
       setStep(2);
     }
 
   }, [location, navigate]);
 
 
-
   /* FETCH MASTER STUDENT DATA */
 
   useEffect(() => {
 
-    fetch(
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
-    )
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
@@ -101,8 +186,7 @@ const CoursePage = () => {
   }, []);
 
 
-
-  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
+  /* FETCH FORM RESPONSES */
 
   useEffect(() => {
 
@@ -115,9 +199,9 @@ const CoursePage = () => {
         if (rows.length < 2) return;
 
         const headers =
-          rows[0]
-            .split(",")
-            .map(h => h.trim().toLowerCase());
+          rows[0].split(",").map(h =>
+            h.trim().toLowerCase()
+          );
 
         const getIndex = (name) =>
           headers.indexOf(name);
@@ -162,7 +246,6 @@ const CoursePage = () => {
   }, []);
 
 
-
   /* FILTER AVAILABLE BATCHES */
 
   useEffect(() => {
@@ -171,8 +254,10 @@ const CoursePage = () => {
 
     const batches = students
       .filter(s =>
-        normalize(s.Department) === normalize(department) &&
-        normalize(s.Course) === normalize(course)
+
+        branchToDepartment(s.Branch) === department &&
+        branchToCourse(s.Branch) === normalize(course)
+
       )
       .map(s => s.Batch);
 
@@ -181,20 +266,18 @@ const CoursePage = () => {
   }, [department, course, students]);
 
 
-
-  /* FAST SUBMISSION CHECK */
+  /* CHECK SUBMISSION STATUS */
 
   const isSubmitted = (student) =>
     submittedSet.has(makeKey(student));
-
 
 
   /* FILTER STUDENTS */
 
   const filteredStudents = students.filter(s =>
 
-    normalize(s.Department) === normalize(department) &&
-    normalize(s.Course) === normalize(course) &&
+    branchToDepartment(s.Branch) === department &&
+    branchToCourse(s.Branch) === normalize(course) &&
     normalize(s.Batch) === normalize(batch) &&
 
     (
@@ -203,7 +286,6 @@ const CoursePage = () => {
     )
 
   );
-
 
 
   /* BACK BUTTON */
@@ -218,7 +300,6 @@ const CoursePage = () => {
   };
 
 
-
   /* GOOGLE FORM PREFILL */
 
   const openForm = (s) => {
@@ -230,14 +311,13 @@ const CoursePage = () => {
       `${base}` +
       `&entry.2061477684=${encodeURIComponent(s.Name)}` +
       `&entry.1519676616=${encodeURIComponent(s["Enrollment No"])}` +
-      `&entry.631301714=${encodeURIComponent(s.Department)}` +
-      `&entry.1161002506=${encodeURIComponent(s.Course)}` +
+      `&entry.631301714=${encodeURIComponent(branchToDepartment(s.Branch))}` +
+      `&entry.1161002506=${encodeURIComponent(branchToCourse(s.Branch))}` +
       `&entry.1808170822=${encodeURIComponent(s.Batch)}`;
 
     window.open(url, "_blank");
 
   };
-
 
 
   return (
@@ -269,7 +349,6 @@ const CoursePage = () => {
         </div>
 
 
-
         {step > 1 && (
 
           <button
@@ -282,15 +361,15 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 2 && (
 
           <>
+
             <h3>{department}</h3>
 
             <div className="course-pills">
 
-              {departmentCourseMap[department].map(c => (
+              {departmentCourseMap[department]?.map(c => (
 
                 <span
                   key={c}
@@ -314,10 +393,10 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 3 && (
 
           <>
+
             <h3>{department} / {course}</h3>
 
             <select
@@ -336,9 +415,7 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>
-                  {b}
-                </option>
+                <option key={i}>{b}</option>
 
               ))}
 
@@ -349,10 +426,10 @@ const CoursePage = () => {
         )}
 
 
-
         {step === 4 && (
 
           <>
+
             <h3>{department} / {course} / {batch}</h3>
 
             <input
@@ -423,5 +500,6 @@ const CoursePage = () => {
   );
 
 };
+
 
 export default CoursePage;
