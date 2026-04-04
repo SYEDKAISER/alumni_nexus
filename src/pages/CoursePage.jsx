@@ -7,7 +7,10 @@ import "../styles/course.css";
 
 const departmentCourseMap = {
 
-  CSE: ["BTECH", "DIPLOMA"],
+  CSE: [
+    "BTECH",
+    "DIPLOMA"
+  ],
 
   CIVIL: [
     "BTECH",
@@ -16,15 +19,32 @@ const departmentCourseMap = {
     "DRAFTSMAN CIVIL"
   ],
 
-  ECE: ["BTECH", "MTECH", "DIPLOMA"],
+  ECE: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA"
+  ],
 
-  ELECTRICAL: ["BTECH", "DIPLOMA"],
+  ELECTRICAL: [
+    "BTECH",
+    "DIPLOMA"
+  ],
 
-  MECHANICAL: ["BTECH", "MTECH", "DIPLOMA"],
+  MECHANICAL: [
+    "BTECH",
+    "MTECH",
+    "DIPLOMA"
+  ],
 
-  "Computer Sciences": ["BCA", "MCA"],
+  "Computer Applications": [
+    "BCA",
+    "MCA"
+  ],
 
-  "Business School": ["BBA", "MBA"],
+  "Business School": [
+    "BBA",
+    "MBA"
+  ],
 
   "Secretarial Practice & Office Management": [
     "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
@@ -39,7 +59,7 @@ const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
 
-/* UNIQUE KEY GENERATOR */
+/* UNIQUE MATCH KEY */
 
 const makeKey = (r) =>
 [
@@ -187,31 +207,10 @@ const CoursePage = () => {
     if (!department || !course) return;
 
     const batches = students
-      .filter(s => {
-
-        if (
-          normalize(department) ===
-          "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
-        ) {
-          return (
-            normalize(s.Department) ===
-            "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
-          );
-        }
-
-        return (
-
-          normalize(s.Department) === normalize(department) &&
-
-          (
-            normalize(course) === "DIPLOMA"
-              ? normalize(s.Course) === "DIPLOMA"
-              : normalize(s.Course) === normalize(course)
-          )
-
-        );
-
-      })
+      .filter(s =>
+        normalize(s.Department) === normalize(department) &&
+        normalize(s.Course) === normalize(course)
+      )
       .map(s => s.Batch);
 
     setAvailableBatches([...new Set(batches)]);
@@ -229,45 +228,18 @@ const CoursePage = () => {
 
   /* FILTER STUDENTS */
 
-  const filteredStudents = students.filter(s => {
+  const filteredStudents = students.filter(s =>
 
-    if (
-      normalize(department) ===
-      "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
-    ) {
-      return (
+    normalize(s.Department) === normalize(department) &&
+    normalize(s.Course) === normalize(course) &&
+    normalize(s.Batch) === normalize(batch) &&
 
-        normalize(s.Department) ===
-        "SECRETARIAL PRACTICE & OFFICE MANAGEMENT" &&
+    (
+      normalize(s.Name).includes(normalize(search)) ||
+      normalize(s["Enrollment No"]).includes(normalize(search))
+    )
 
-        normalize(s.Course) ===
-        "SECRETARIAL PRACTICE & OFFICE MANAGEMENT" &&
-
-        normalize(s.Batch) === normalize(batch)
-
-      );
-    }
-
-    return (
-
-      normalize(s.Department) === normalize(department) &&
-
-      (
-        normalize(course) === "DIPLOMA"
-          ? normalize(s.Course) === "DIPLOMA"
-          : normalize(s.Course) === normalize(course)
-      ) &&
-
-      normalize(s.Batch) === normalize(batch) &&
-
-      (
-        normalize(s.Name).includes(normalize(search)) ||
-        normalize(s["Enrollment No"]).includes(normalize(search))
-      )
-
-    );
-
-  });
+  );
 
 
 
@@ -486,5 +458,6 @@ const CoursePage = () => {
   );
 
 };
+
 
 export default CoursePage;
