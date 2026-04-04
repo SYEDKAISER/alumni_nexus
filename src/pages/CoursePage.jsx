@@ -2,73 +2,32 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
-
-/* DEPARTMENT → COURSE MAP */
+/* DIPLOMA TEMPORARILY DISABLED */
 
 const departmentCourseMap = {
-
-  CSE: [
-    "BTECH",
-    "DIPLOMA"
-  ],
-
-  CIVIL: [
-    "BTECH",
-    "DIPLOMA",
-    "ARCHITECTURAL ASSISTANTSHIP",
-    "DRAFTSMAN CIVIL"
-  ],
-
-  ECE: [
-    "BTECH",
-    "MTECH",
-    "DIPLOMA"
-  ],
-
-  ELECTRICAL: [
-    "BTECH",
-    "DIPLOMA"
-  ],
-
-  MECHANICAL: [
-    "BTECH",
-    "MTECH",
-    "DIPLOMA"
-  ],
-
-  "Computer Applications": [
-    "BCA",
-    "MCA"
-  ],
-
-  "Business School": [
-    "BBA",
-    "MBA"
-  ],
-
-  "Secretarial Practice & Office Management": [
-    "SECRETARIAL PRACTICE & OFFICE MANAGEMENT"
-  ]
-
+  CSE: ["BTECH"],
+  CIVIL: ["BTECH"],
+  ECE: ["BTECH", "MTECH"],
+  ELECTRICAL: ["BTECH"],
+  MECHANICAL: ["BTECH", "MTECH"],
+  "Computer Sciences": ["BCA", "MCA"],
+  "Business School": ["BBA", "MBA"]
 };
 
-
-/* NORMALIZER */
+/* NORMALIZER (PREVENTS SPACE + CASE ISSUES) */
 
 const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
-
-/* UNIQUE MATCH KEY */
+/* UNIQUE MATCHING KEY */
 
 const makeKey = (r) =>
-[
-  normalize(r["Enrollment No"]),
-  normalize(r["Course"]),
-  normalize(r["Department"]),
-  normalize(r["Batch"])
-].join("|");
-
+  [
+    normalize(r["Enrollment No"]),
+    normalize(r["Course"]),
+    normalize(r["Department"]),
+    normalize(r["Batch"])
+  ].join("|");
 
 const CoursePage = () => {
 
@@ -88,6 +47,7 @@ const CoursePage = () => {
   const [search, setSearch] = useState("");
 
 
+
   /* SAFE NAVIGATION */
 
   useEffect(() => {
@@ -104,11 +64,14 @@ const CoursePage = () => {
   }, [location, navigate]);
 
 
+
   /* FETCH MASTER STUDENT DATA */
 
   useEffect(() => {
 
-    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
+    fetch(
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv"
+    )
       .then(res => res.text())
       .then(text => {
 
@@ -139,7 +102,7 @@ const CoursePage = () => {
 
 
 
-  /* FETCH FORM RESPONSES */
+  /* FETCH FORM RESPONSES + BUILD FAST LOOKUP SET */
 
   useEffect(() => {
 
@@ -152,9 +115,9 @@ const CoursePage = () => {
         if (rows.length < 2) return;
 
         const headers =
-          rows[0].split(",").map(h =>
-            h.trim().toLowerCase()
-          );
+          rows[0]
+            .split(",")
+            .map(h => h.trim().toLowerCase());
 
         const getIndex = (name) =>
           headers.indexOf(name);
@@ -219,7 +182,7 @@ const CoursePage = () => {
 
 
 
-  /* CHECK SUBMISSION STATUS */
+  /* FAST SUBMISSION CHECK */
 
   const isSubmitted = (student) =>
     submittedSet.has(makeKey(student));
@@ -373,7 +336,9 @@ const CoursePage = () => {
 
               {availableBatches.map((b, i) => (
 
-                <option key={i}>{b}</option>
+                <option key={i}>
+                  {b}
+                </option>
 
               ))}
 
@@ -458,6 +423,5 @@ const CoursePage = () => {
   );
 
 };
-
 
 export default CoursePage;
