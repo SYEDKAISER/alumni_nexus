@@ -8,15 +8,25 @@ import "../styles/course.css";
 const departmentCourseMap = {
 
   CSE: ["BTECH", "DIPLOMA"],
+
   IT: ["DIPLOMA"],
+
   CIVIL: ["BTECH", "DIPLOMA"],
-  DRAFTSMANSHIP: ["DIPLOMA"],
+
+  "DRAFTSMANSHIP CIVIL": ["DIPLOMA"],
+
   "ARCHITECTURAL ASSISTANTSHIP": ["DIPLOMA"],
+
   ECE: ["BTECH", "MTECH", "DIPLOMA"],
+
   ELECTRICAL: ["BTECH", "DIPLOMA"],
+
   MECHANICAL: ["BTECH", "MTECH", "DIPLOMA"],
+
   "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": ["DIPLOMA"],
+
   "Computer Applications": ["BCA", "MCA"],
+
   "Business School": ["BBA", "MBA"]
 
 };
