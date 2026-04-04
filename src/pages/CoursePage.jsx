@@ -1,38 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import "../styles/course.css";
 
 
-/*
-COURSE LEVEL MAPPING
-Only shows DIPLOMA / BTECH / MTECH etc.
-Actual filtering still uses CSV Course column
-*/
+/* COURSE LEVEL MAP */
 
 const departmentCourseMap = {
 
   CSE: ["BTECH", "DIPLOMA"],
-
   IT: ["DIPLOMA"],
-
   CIVIL: ["BTECH", "DIPLOMA"],
-
   DRAFTSMANSHIP: ["DIPLOMA"],
-
   "ARCHITECTURAL ASSISTANTSHIP": ["DIPLOMA"],
-
   ECE: ["BTECH", "MTECH", "DIPLOMA"],
-
   ELECTRICAL: ["BTECH", "DIPLOMA"],
-
   MECHANICAL: ["BTECH", "MTECH", "DIPLOMA"],
-
-  "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": [
-    "DIPLOMA"
-  ],
-
+  "SECRETARIAL PRACTICE & OFFICE MANAGEMENT": ["DIPLOMA"],
   "Computer Applications": ["BCA", "MCA"],
-
   "Business School": ["BBA", "MBA"]
 
 };
@@ -44,7 +28,7 @@ const normalize = (v) =>
   (v || "").toString().trim().toUpperCase();
 
 
-/* UNIQUE MATCH KEY */
+/* UNIQUE KEY */
 
 const makeKey = (r) =>
   [
@@ -60,6 +44,7 @@ const CoursePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+
   const [step, setStep] = useState(1);
 
   const [department, setDepartment] = useState("");
@@ -69,8 +54,12 @@ const CoursePage = () => {
   const [students, setStudents] = useState([]);
   const [submittedSet, setSubmittedSet] = useState(new Set());
 
-  const [availableBatches, setAvailableBatches] = useState([]);
   const [search, setSearch] = useState("");
+
+
+  /* INDEX STRUCTURE */
+
+  const [index, setIndex] = useState({});
 
 
   /* SAFE NAVIGATION */
@@ -90,7 +79,7 @@ const CoursePage = () => {
   }, [location, navigate]);
 
 
-  /* FETCH MASTER CSV */
+  /* FETCH MASTER DATA + BUILD INDEX */
 
   useEffect(() => {
 
@@ -104,31 +93,51 @@ const CoursePage = () => {
           text.split("\n").filter(Boolean);
 
         const headers =
-          rows[0].split(",").map(h => h.trim());
+          rows[0].split(",");
 
-        const parsed =
-          rows.slice(1).map(row => {
+        const parsedIndex = {};
 
-            const values = row.split(",");
+        rows.slice(1).forEach(row => {
 
-            let obj = {};
+          const values = row.split(",");
 
-            headers.forEach((h, i) => {
-              obj[h] = values[i]?.trim();
-            });
+          let obj = {};
 
-            return obj;
-
+          headers.forEach((h, i) => {
+            obj[h.trim()] = values[i]?.trim();
           });
 
-        setStudents(parsed);
+          const dept =
+            normalize(obj.Department);
+
+          const courseVal =
+            normalize(obj.Course);
+
+          const batchVal =
+            normalize(obj.Batch);
+
+
+          if (!parsedIndex[dept])
+            parsedIndex[dept] = {};
+
+          if (!parsedIndex[dept][courseVal])
+            parsedIndex[dept][courseVal] = {};
+
+          if (!parsedIndex[dept][courseVal][batchVal])
+            parsedIndex[dept][courseVal][batchVal] = [];
+
+          parsedIndex[dept][courseVal][batchVal].push(obj);
+
+        });
+
+        setIndex(parsedIndex);
 
       });
 
   }, []);
 
 
-  /* FETCH FORM RESPONSES */
+  /* FETCH SUBMISSIONS */
 
   useEffect(() => {
 
@@ -141,8 +150,6 @@ const CoursePage = () => {
         const rows =
           text.split("\n").filter(Boolean);
 
-        if (rows.length < 2) return;
-
         const headers =
           rows[0]
             .split(",")
@@ -151,41 +158,22 @@ const CoursePage = () => {
         const getIndex = (name) =>
           headers.indexOf(name);
 
-        const enrollmentIndex =
-          getIndex("enrollment no");
-
-        const departmentIndex =
-          getIndex("department");
-
-        const courseIndex =
-          getIndex("course");
-
-        const batchIndex =
-          getIndex("batch");
-
         const lookup = new Set();
 
         rows.slice(1).forEach(row => {
 
           const cols = row.split(",");
 
-          const record = {
-
+          lookup.add(makeKey({
             "Enrollment No":
-              cols[enrollmentIndex],
-
+              cols[getIndex("enrollment no")],
             Department:
-              cols[departmentIndex],
-
+              cols[getIndex("department")],
             Course:
-              cols[courseIndex],
-
+              cols[getIndex("course")],
             Batch:
-              cols[batchIndex]
-
-          };
-
-          lookup.add(makeKey(record));
+              cols[getIndex("batch")]
+          }));
 
         });
 
@@ -196,64 +184,83 @@ const CoursePage = () => {
   }, []);
 
 
-  /* FILTER BATCHES */
+  /* FAST BATCH LOOKUP */
 
-  useEffect(() => {
+  const availableBatches = useMemo(() => {
 
     if (!department || !course)
-      return;
+      return [];
 
-    const batches =
-      students
-        .filter(s =>
-          normalize(s.Department) ===
-          normalize(department) &&
+    const deptData =
+      index[normalize(department)];
 
-          normalize(s.Course).includes(
-            normalize(course)
-          )
-        )
-        .map(s => s.Batch);
+    if (!deptData)
+      return [];
 
-    setAvailableBatches(
-      [...new Set(batches)]
-    );
+    const batches = Object.keys(deptData)
+      .filter(c =>
+        c.includes(normalize(course))
+      )
+      .flatMap(c =>
+        Object.keys(deptData[c])
+      );
 
-  }, [department, course, students]);
+    return [...new Set(batches)];
 
-
-  /* CHECK SUBMITTED */
-
-  const isSubmitted = (student) =>
-    submittedSet.has(makeKey(student));
+  }, [department, course, index]);
 
 
-  /* FILTER STUDENTS */
+  /* FAST STUDENT LOOKUP */
 
-  const filteredStudents =
-    students.filter(s =>
+  const filteredStudents = useMemo(() => {
 
-      normalize(s.Department) ===
-        normalize(department) &&
+    if (!department || !course || !batch)
+      return [];
 
-      normalize(s.Course).includes(
-        normalize(course)
-      ) &&
+    const deptData =
+      index[normalize(department)];
 
-      normalize(s.Batch) ===
-        normalize(batch) &&
+    if (!deptData)
+      return [];
 
-      (
-        normalize(s.Name).includes(
-          normalize(search)
-        ) ||
+    let list = [];
 
-        normalize(s["Enrollment No"]).includes(
-          normalize(search)
-        )
+    Object.keys(deptData).forEach(c => {
+
+      if (c.includes(normalize(course))) {
+
+        const batchStudents =
+          deptData[c][normalize(batch)];
+
+        if (batchStudents)
+          list.push(...batchStudents);
+
+      }
+
+    });
+
+    if (!search)
+      return list;
+
+    return list.filter(s =>
+
+      normalize(s.Name).includes(
+        normalize(search)
+      ) ||
+
+      normalize(s["Enrollment No"]).includes(
+        normalize(search)
       )
 
     );
+
+  }, [department, course, batch, search, index]);
+
+
+  /* SUBMISSION CHECK */
+
+  const isSubmitted = (student) =>
+    submittedSet.has(makeKey(student));
 
 
   /* BACK BUTTON */
@@ -414,53 +421,43 @@ const CoursePage = () => {
               }
             />
 
-            {filteredStudents.length === 0 ? (
+            {filteredStudents.map((s, i) => {
 
-              <p className="empty">
-                No students found
-              </p>
+              const submitted =
+                isSubmitted(s);
 
-            ) : (
+              return (
 
-              filteredStudents.map((s, i) => {
+                <div
+                  key={i}
+                  className="student-row"
+                >
 
-                const submitted =
-                  isSubmitted(s);
+                  <span>{s.Name}</span>
 
-                return (
+                  <span>
+                    {s["Enrollment No"]}
+                  </span>
 
-                  <div
-                    key={i}
-                    className="student-row"
+                  <button
+                    className={
+                      submitted
+                        ? "btn submitted"
+                        : "btn"
+                    }
+                    disabled={submitted}
+                    onClick={() => openForm(s)}
                   >
+                    {submitted
+                      ? "Form Submitted"
+                      : "Fill Form"}
+                  </button>
 
-                    <span>{s.Name}</span>
+                </div>
 
-                    <span>
-                      {s["Enrollment No"]}
-                    </span>
+              );
 
-                    <button
-                      className={
-                        submitted
-                          ? "btn submitted"
-                          : "btn"
-                      }
-                      disabled={submitted}
-                      onClick={() => openForm(s)}
-                    >
-                      {submitted
-                        ? "Form Submitted"
-                        : "Fill Form"}
-                    </button>
-
-                  </div>
-
-                );
-
-              })
-
-            )}
+            })}
 
           </>
 
