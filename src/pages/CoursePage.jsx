@@ -130,7 +130,7 @@ const CoursePage = () => {
 
   useEffect(() => {
 
-    fetch("YOUR_STUDENT_SHEET_CSV_LINK")
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTZLiZpY6m1CoQTciWYPq828duPS78e5xnjx-6pZzKoBCpaGKkiFWONxnK4iwoRFgtLW5T6n2hawabU/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
@@ -165,7 +165,7 @@ const CoursePage = () => {
 
   useEffect(() => {
 
-    fetch("YOUR_FORM_RESPONSES_CSV_LINK")
+    fetch("https://docs.google.com/spreadsheets/d/e/2PACX-1vTEt99IaId_yFfbJdn3bXT9FTnFPEx7HMist6gj7RHhkc6zmpsNt_SvpkrKEBE47_wYH4VGANiMSl3J/pub?output=csv")
       .then(res => res.text())
       .then(text => {
 
